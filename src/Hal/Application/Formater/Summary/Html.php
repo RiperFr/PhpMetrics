@@ -65,6 +65,7 @@ class Html implements FormaterInterface {
             , 'ruleSet' => $this->validator->getRuleSet()
             , 'bounds' => $bound
             , 'withOOP' => null !== $bound->getSum('instability')
+            , 'withCoverage' => null !== $bound->getSum('coveredElementsPercent')
         ));
     }
 

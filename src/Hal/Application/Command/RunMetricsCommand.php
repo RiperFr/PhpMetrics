@@ -8,6 +8,7 @@
  */
 
 namespace Hal\Application\Command;
+use Hal\Application\Command\Job\CoverageAnalyze;
 use Hal\Application\Formater\Violations\Xml;
 use Hal\Component\Aggregator\DirectoryAggregatorFlat;
 use Hal\Component\Bounds\Bounds;
@@ -49,6 +50,9 @@ class RunMetricsCommand extends Command
                 )
                 ->addOption(
                     'report-xml', null, InputOption::VALUE_REQUIRED, 'Path to save summary report in XML format. Example: /tmp/report.xml'
+                )
+                ->addOption(
+                    'coverage-report-xml', null, InputOption::VALUE_REQUIRED, 'Path to a PhpUnitXml coverage report. If present, coverage related metrics will be generated  Example: /tmp/coverage.xml'
                 )
                 ->addOption(
                     'violations-xml', null, InputOption::VALUE_REQUIRED, 'Path to save violations in XML format. Example: /tmp/report.xml'
@@ -95,10 +99,13 @@ class RunMetricsCommand extends Command
         // bounds
         $bounds = new Bounds;
 
+        $analyzer = new DoAnalyze($output, $finder, $input->getArgument('path'), !$input->getOption('without-oop'));
+        $analyzer->setCoverageReportFile($input->getOption('coverage-report-xml'));
+
         // jobs queue planning
         $queue = new Queue();
         $queue
-            ->push(new DoAnalyze($output, $finder, $input->getArgument('path'), !$input->getOption('without-oop')))
+            ->push($analyzer)
             ->push(new SearchBounds($output, $bounds))
             ->push(new DoAggregatedAnalyze($output, new DirectoryAggregatorFlat($level)))
             ->push(new ReportRenderer($output, new Summary\Cli($validator, $bounds)))

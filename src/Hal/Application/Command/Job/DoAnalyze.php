@@ -18,6 +18,8 @@ use Hal\Component\OOP\Extractor\ClassMap;
 use Hal\Component\OOP\Extractor\Extractor;
 use Hal\Component\Result\ResultCollection;
 use Hal\Component\Token\Tokenizer;
+use Hal\Metrics\Confidence\Coverage\Coverage;
+use Hal\Metrics\Confidence\Coverage\PhpunitXmlReport;
 use Symfony\Component\Console\Helper\ProgressHelper;
 use Symfony\Component\Console\Output\OutputInterface;
 
@@ -59,6 +61,13 @@ class DoAnalyze implements JobInterface
     private $withOOP;
 
     /**
+     * Path to a phpUnitCoverage xml report
+     * If not null, will trigger analysis related to coverage
+     * @var string
+     */
+    protected $coverageReportFile ;
+
+    /**
      * Constructor
      *
      * @param OutputInterface $output
@@ -72,6 +81,10 @@ class DoAnalyze implements JobInterface
         $this->finder = $finder;
         $this->path = $path;
         $this->withOOP = $withOOP;
+    }
+
+    public function setCoverageReportFile($coverageXmlReportFile){
+        $this->coverageReportFile = $coverageXmlReportFile ;
     }
 
     /**
@@ -93,6 +106,7 @@ class DoAnalyze implements JobInterface
         $tokenizer = new Tokenizer();
         $syntaxChecker = new SyntaxChecker();
 
+
         $fileAnalyzer = new FileAnalyzer(
             $this->output
             , $this->withOOP
@@ -104,6 +118,14 @@ class DoAnalyze implements JobInterface
             , new \Hal\Metrics\Complexity\Component\Myer\Myer($tokenizer)
             , $classMap
         );
+
+        if($this->coverageReportFile){
+            $coverageReport = new PhpunitXmlReport($this->coverageReportFile);
+            $coverage = new Coverage($coverageReport);
+            $confidenceIndex = new \Hal\Metrics\Confidence\ConfidenceIndex\ConfidenceIndex();
+            $fileAnalyzer->setCoverageMetricsNalayze($coverage);
+            $fileAnalyzer->setConfidenceIndexAnalayze($confidenceIndex);
+        }
 
         foreach($files as $k => $filename) {
 

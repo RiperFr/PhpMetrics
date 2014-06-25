@@ -76,6 +76,7 @@ class Cli implements FormaterInterface {
         $output->writeln('');
 
         $hasOOP = null !== $total->getSum('instability');
+        $hasCoverage = null !== $total->getSum('coveredElementsPercent');
 
         $table = new TableHelper();
         $table
@@ -100,6 +101,10 @@ class Cli implements FormaterInterface {
                     , 'ce'
                     , 'ca'
                     ) : array())
+                , ($hasCoverage ? array(
+                    'Covered elements',
+                    'Confidence Index',
+                ) : array())
 
             ))
             ->setLayout(TableHelper::LAYOUT_DEFAULT);
@@ -125,6 +130,10 @@ class Cli implements FormaterInterface {
                     , $result->getAbstractness()->getAbstractness()
                     , $this->getRow($result->getBounds(), 'efferentCoupling', 'average', 2)
                     , $this->getRow($result->getBounds(), 'afferentCoupling', 'average', 2)
+                    ) : array())
+                ,  ($hasCoverage ? array(
+                        $this->getRow($result->getBounds(), 'coveredElementsPercent','average',2),
+                        $this->getRow($result->getBounds(), 'confidenceIndex','average',2),
                     ) : array())
                 )
             );

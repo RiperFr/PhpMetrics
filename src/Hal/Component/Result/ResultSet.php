@@ -87,6 +87,18 @@ class ResultSet implements ExportableInterface, ResultSetInterface {
     private $systemComplexity;
 
     /**
+     * @var \Hal\Metrics\Confidence\Coverage\Result
+     */
+    protected $coverage;
+
+    /**
+     * @var \Hal\Metrics\Confidence\ConfidenceIndex\Result
+     */
+    protected $confidenceIndex;
+
+
+
+    /**
      * Constructor
      *
      * @param string $filename
@@ -120,6 +132,8 @@ class ResultSet implements ExportableInterface, ResultSetInterface {
             , $this->getMyer() ? $this->getMyer()->asArray() : array()
             , $this->getLcom() ? $this->getLcom()->asArray() : array()
             , $this->getSystemComplexity() ? $this->getSystemComplexity()->asArray() : array()
+            , $this->getCoverage() ? $this->getCoverage()->asArray() : array()
+            , $this->getConfidenceIndex() ? $this->getConfidenceIndex()->asArray() : array()
         );
     }
 
@@ -288,5 +302,22 @@ class ResultSet implements ExportableInterface, ResultSetInterface {
     }
 
 
+    public function setCoverage(\Hal\Metrics\Confidence\Coverage\Result $coverageResult){
+        $this->coverage = $coverageResult;
+        return $this ;
+    }
+
+    public function getCoverage(){
+        return $this->coverage ;
+    }
+
+    public function setConfidenceIndex(\Hal\Metrics\Confidence\ConfidenceIndex\Result $confidenceIndexResult){
+        $this->confidenceIndex = $confidenceIndexResult;
+        return $this ;
+    }
+
+    public function getConfidenceIndex(){
+        return $this->confidenceIndex ;
+    }
 
 }

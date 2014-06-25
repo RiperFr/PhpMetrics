@@ -11,6 +11,8 @@ namespace Hal\Application\Command\Job\Analyze;
 use Hal\Metrics\Complexity\Component\Myer\Myer;
 use Hal\Metrics\Complexity\Text\Halstead\Halstead;
 use Hal\Metrics\Complexity\Text\Length\Loc;
+use Hal\Metrics\Confidence\ConfidenceIndex\ConfidenceIndex;
+use Hal\Metrics\Confidence\Coverage\Coverage;
 use Hal\Metrics\Design\Component\MaintenabilityIndex\MaintenabilityIndex;
 use Hal\Metrics\Complexity\Component\McCabe\McCabe;
 use Hal\Component\OOP\Extractor\ClassMap;
@@ -77,6 +79,16 @@ class FileAnalyzer
     private $classMap;
 
     /**
+     * @var Coverage
+     */
+    protected $coverage ;
+
+    /**
+     * @var ConfidenceIndex
+     */
+    protected $confidenceIndexAnalayze;
+
+    /**
      * Constructor
      *
      * @param OutputInterface $output
@@ -113,11 +125,20 @@ class FileAnalyzer
     }
 
 
+    public function setCoverageMetricsNalayze(Coverage $coverageReportAnalyser){
+        $this->coverage = $coverageReportAnalyser ;
+    }
+    public function setConfidenceIndexAnalayze(ConfidenceIndex $service){
+        $this->confidenceIndexAnalayze = $service ;
+    }
+
     /**
      * Run analyze
      * @return \Hal\Component\Result\ResultSet
      */
     public function execute($filename) {
+
+        $resultSet = new \Hal\Component\Result\ResultSet($filename);
 
         $rHalstead = $this->halstead->calculate($filename);
         $rLoc = $this->loc->calculate($filename);
@@ -125,7 +146,13 @@ class FileAnalyzer
         $rMyer = $this->myer->calculate($filename);
         $rMaintenability = $this->maintenabilityIndex->calculate($rHalstead, $rLoc, $rMcCabe);
 
-        $resultSet = new \Hal\Component\Result\ResultSet($filename);
+        if($this->coverage){
+            $rCoverage = $this->coverage->calculate($filename);
+            $resultSet->setCoverage($rCoverage);
+            $rConfidenceIndex = $this->confidenceIndexAnalayze->calculate($rCoverage,$rHalstead, $rLoc, $rMcCabe);
+            $resultSet->setConfidenceIndex($rConfidenceIndex);
+        }
+
         $resultSet
             ->setLoc($rLoc)
             ->setMcCabe($rMcCabe)
