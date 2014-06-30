@@ -27,36 +27,36 @@ class ConfidenceIndex
 
         $metrics                                  = array();
         $metrics["halsteadVolumeConfidenceIndex"] = $this->calc(
-                $rHalstead->getVolume(),
-                300,
-                10,
-                self::METRIC_CONSTANT_HALSTEAD_VOLUME
-            ) + 1;
+            $rHalstead->getVolume(),
+            array(0, 300, 3000),
+            1,
+            self::METRIC_CONSTANT_HALSTEAD_VOLUME
+        );
 
 
         $metrics["cyclomaticComplexityConfidenceIndex"] = $this->calc(
-                $rMcCabe->getCyclomaticComplexityNumber(),
-                10,
-                1,
-                self::METRIC_CONSTANT_CYCLOMATIC_COMPLEXITY
-            ) + 1;
+            $rMcCabe->getCyclomaticComplexityNumber(),
+            array(1, 10, 60),
+            8,
+            self::METRIC_CONSTANT_CYCLOMATIC_COMPLEXITY
+        );
 
 
         $metrics["logicalLocConfidenceIndex"] = $this->calc(
-                $rLoc->getLogicalLoc(),
-                3,
-                1,
-                self::METRIC_CONSTANT_LOGICAL_LOC
-            ) + 1;
+            $rLoc->getLogicalLoc(),
+            array(1, 50, 500),
+            6,
+            self::METRIC_CONSTANT_LOGICAL_LOC
+        );
 
         //if (!$rCoverage->isNoCoverageData()) {
-            $metrics["coverageConfidenceIndex"] = 0 - $this->calc(
-                    $rCoverage->getCoveredElementsPercent(),
-                    20,
-                    1,
-                    self::METRIC_CONSTANT_COVERAGE
-                ) + 1;
-            $result->setCoverageConfidenceIndex($metrics['coverageConfidenceIndex']);
+        $metrics["coverageConfidenceIndex"] = 150-$this->calc(
+            $rCoverage->getCoveredElementsPercent(),
+            array(-50, 85, 100),
+            8,
+            self::METRIC_CONSTANT_COVERAGE
+        );
+        $result->setCoverageConfidenceIndex($metrics['coverageConfidenceIndex']);
         //}
 
         $max = count($metrics);
@@ -67,8 +67,9 @@ class ConfidenceIndex
 
 
         $confidenceIndex = array_sum($metrics) / $max;
+        $confidenceIndex = min(100,$confidenceIndex);
 
-        $result->setConfidenceIndex(round($confidenceIndex, 2));
+        $result->setConfidenceIndex(round($confidenceIndex, 0));
 
 
         return $result;
@@ -91,12 +92,43 @@ class ConfidenceIndex
      * @return float    The result of the calc between -1 & 1
      *
      */
-    protected function calc($metricValue, $threshold, $variation, $metricConstant)
+    protected function calc($metricValue, array $threshold, $variation = 1)
     {
-        $result = 0 - tanh(($metricValue - $threshold) * ($metricConstant * $variation));
+        //Normalisation of the metrics value
+        $const  = ($variation);
+        $max       = $threshold[2];
+        $min       = $threshold[0];
+        $threshold = $threshold[1];
 
-        //return $result;
 
-        return round($result, 4);
+        //To normalize, we use bounds to determine constant factor and adjustment.
+        //According to the threshold and variation speed
+
+        $normalizedMetric = ($metricValue-$min) /($max-$min);
+        $normalizedThreshold = ($threshold-$min) /($max-$min);
+
+        $normalizedMetric = min(1,$normalizedMetric);
+        $normalizedThreshold = min(1,$normalizedThreshold);
+
+
+        $x = 1 /
+            (
+                tanh($const * (1- $normalizedThreshold))
+                + tanh($const*$normalizedThreshold)
+            );
+        $y = tanh($const * $normalizedThreshold)
+            /
+            (
+                tanh($const *(1-$normalizedThreshold))
+                + tanh($const* $normalizedThreshold)
+            );
+
+
+        $result =  (tanh(($normalizedMetric-0.5 - ($normalizedThreshold-0.5)) * $const)) * $x + $y;
+        $result = 100- $result * 100 ;
+
+
+
+        return round($result, 0);
     }
 }

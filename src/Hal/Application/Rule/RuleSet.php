@@ -52,7 +52,7 @@ class RuleSet implements ExportableInterface {
                 , 'myerDistance' => array(10, 5, 2)
                 , 'lcom' => array(3, 2, 1.5)
                 , 'coveredElementsPercent' => array(20,50,85)
-                , 'confidenceIndex' => array(0.45,0.90,1.20)
+                , 'confidenceIndex' => array(0,69,85)
             );
         }
 
